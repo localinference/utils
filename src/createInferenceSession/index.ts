@@ -1,48 +1,36 @@
 import type { InferenceSession } from 'onnxruntime-web'
 import { LocalInferenceUtilsError } from '../.errors/class.js'
+import {
+  GPUAccelerationSupported,
+  isDeno,
+} from '../GPUAccelerationSupported/index.js'
 
-type DenoGlobal = {
-  Deno?: {
-    version?: {
-      deno?: string
-    }
-  }
-}
+const getExecutionProviders = (useGPUAcceleration: boolean): string[] =>
+  useGPUAcceleration ? ['webnn', 'webgpu', 'webgl', 'wasm'] : ['wasm']
 
-const isNodeJs = (): boolean =>
-  typeof process !== 'undefined' && !!process.versions?.node
-
-const isDeno = (): boolean =>
-  !!(globalThis as typeof globalThis & DenoGlobal).Deno?.version?.deno
-
-const usesWasmRuntimeOnly = (): boolean => isNodeJs() || isDeno()
-
-const getExecutionProviders = (): string[] =>
-  usesWasmRuntimeOnly() ? ['wasm'] : ['webnn', 'webgpu', 'webgl', 'wasm']
-
-const getInferenceSession = async (): Promise<
-  (typeof import('onnxruntime-web'))['InferenceSession']
-> => {
-  if (usesWasmRuntimeOnly()) {
-    const runtime = await import('onnxruntime-web')
-
-    if (isDeno()) {
-      runtime.env.wasm.numThreads = 1
-    }
-
-    return runtime.InferenceSession
+const getRuntime = async (
+  useGPUAcceleration: boolean
+): Promise<typeof import('onnxruntime-web')> => {
+  if (useGPUAcceleration) {
+    return import('onnxruntime-web/all')
   }
 
-  const runtime = await import('onnxruntime-web/all')
-  return runtime.InferenceSession
+  const runtime = await import('onnxruntime-web')
+
+  if (isDeno()) {
+    runtime.env.wasm.numThreads = 1
+  }
+
+  return runtime
 }
 
 /**
  * Creates an ONNX Runtime inference session from a serialized model.
  *
- * In Node.js and Deno, the session uses the WASM execution provider. In
- * browser-like runtimes, the session prefers the WebNN, WebGPU, WebGL, and
- * WASM execution providers in that order.
+ * In Node.js, Bun, Deno, and runtimes without likely browser GPU acceleration,
+ * the session uses the WASM execution provider. In browser-like runtimes that
+ * appear to expose WebNN, WebGPU, or WebGL, it prefers those execution
+ * providers before falling back to WASM.
  *
  * @param model The serialized ONNX model bytes.
  * @returns A promise that fulfills with the initialized inference session.
@@ -52,11 +40,13 @@ const getInferenceSession = async (): Promise<
 export async function createInferenceSession(
   model: Uint8Array
 ): Promise<InferenceSession> {
-  const Session = await getInferenceSession()
+  const useGPUAcceleration = GPUAccelerationSupported()
+  const executionProviders = getExecutionProviders(useGPUAcceleration)
+  const runtime = await getRuntime(useGPUAcceleration)
 
   try {
-    return await Session.create(model, {
-      executionProviders: getExecutionProviders(),
+    return await runtime.InferenceSession.create(model, {
+      executionProviders,
     })
   } catch (cause) {
     throw new LocalInferenceUtilsError(

@@ -9,7 +9,7 @@ Local Inference internal utils package to avoid boilerplate across codebases.
 
 ## Compatibility
 
-- Runtimes: Node >= 22; Bun and Deno via npm compatibility; Browsers: modern browsers with WebAssembly; Workers/Edge: browser-like runtimes may work when ONNX Runtime Web assets are reachable.
+- Runtimes: Node >= 22; Bun and Deno via npm compatibility; Browsers and browser web workers with WebAssembly; service-worker-style edge runtimes for package loading, GPU-detection fallback, and wasm-path selection smoke coverage.
 - Module formats: ESM and CommonJS.
 - Required globals / APIs: `Uint8Array`; browser runtimes need ONNX Runtime Web compatible backends such as `WebNN`, `WebGPU`, `WebGL`, or `WebAssembly`.
 - TypeScript: bundled types.
@@ -29,9 +29,25 @@ npm install @localinference/utils
 pnpm add @localinference/utils
 # or
 yarn add @localinference/utils
+# or
+bun add @localinference/utils
+# or
+deno add jsr:@localinference/utils
+# or
+vlt install jsr:@localinference/utils
 ```
 
 ## Usage
+
+### Check whether browser GPU acceleration is likely available
+
+```ts
+import { GPUAccelerationSupported } from '@localinference/utils'
+
+if (GPUAccelerationSupported()) {
+  console.log('Browser GPU acceleration APIs look available')
+}
+```
 
 ### Load a tokenizer
 
@@ -63,9 +79,15 @@ const outputs = await session.run({
 
 `createInferenceSession()` uses the `onnxruntime-web` runtime with the `wasm` execution provider. In Deno, it also forces single-threaded wasm to avoid runtime worker failures. `createTokenizer()` loads the serialized SentencePiece model directly from bytes.
 
-### Browsers / Edge runtimes
+### Browsers / Web Workers
 
-`createInferenceSession()` loads `onnxruntime-web/all` and prefers `webnn`, `webgpu`, `webgl`, then `wasm`. Browser builds must make the ONNX Runtime Web wasm assets reachable to the app.
+`GPUAccelerationSupported()` is a heuristic boolean probe for browser and browser-worker contexts. It checks for `WebNN`, `WebGPU`, and `WebGL`. `createInferenceSession()` only loads `onnxruntime-web/all` and prefers `webnn`, `webgpu`, `webgl`, then `wasm` when that probe returns `true`. Otherwise it stays on the `wasm` path. Browser builds must make the ONNX Runtime Web wasm assets reachable to the app.
+
+### Cloudflare Workers / Edge runtimes
+
+This package is smoke-tested in a service-worker-style edge runtime through `edge-runtime`. That coverage verifies that the package loads, `GPUAccelerationSupported()` returns `false`, and `createInferenceSession()` selects the wasm-only path instead of browser GPU providers.
+
+That is narrower than full cross-platform inference support. Real ONNX execution still depends on each edge platform's WebAssembly loading model and asset rules, so Cloudflare Workers, Vercel Edge, and similar runtimes should still be validated in the exact deployment target before being treated as a production inference environment.
 
 ### Validation & errors
 
@@ -89,6 +111,7 @@ This package does not cache tokenizers or inference sessions. Each call creates 
   - Node
   - Bun
   - Deno
+  - Vercel Edge Runtime (`GPUAccelerationSupported()` / wasm-path smoke)
   - Chromium
   - Firefox
   - WebKit
@@ -104,10 +127,10 @@ This package does not cache tokenizers or inference sessions. Each call creates 
 - Environment: `Node v22.14.0 (win32 x64)`
 - Workload: serialized SentencePiece tokenizer load/encode plus ONNX Runtime session create/run against the included identity model fixture
 - Results:
-  - tokenizer load: `14.6 ops/s` (`68.516 ms/op`)
-  - tokenizer encode: `74521.6 ops/s` (`0.013 ms/op`)
-  - session create: `14.3 ops/s` (`69.823 ms/op`)
-  - session run: `11461.1 ops/s` (`0.087 ms/op`)
+  - tokenizer load: `7.9 ops/s` (`127.049 ms/op`)
+  - tokenizer encode: `48509.3 ops/s` (`0.021 ms/op`)
+  - session create: `10.6 ops/s` (`94.519 ms/op`)
+  - session run: `8891.1 ops/s` (`0.112 ms/op`)
 
 Results vary by machine.
 

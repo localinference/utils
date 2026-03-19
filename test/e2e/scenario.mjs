@@ -2,6 +2,7 @@ import { Tensor } from 'onnxruntime-web'
 import {
   createInferenceSession,
   createTokenizer,
+  GPUAccelerationSupported,
   LocalInferenceUtilsError,
 } from '../../dist/index.js'
 import { getIdentityModel, getTokenizerModel } from '../fixtures/models.js'
@@ -43,6 +44,19 @@ export const runEndToEndScenario = async (runtime) => {
     tokenizer.decodeIds(tokenizer.encodeIds('hello world')) === 'hello world',
     `[e2e:${runtime}] tokenizer roundtrip failed`
   )
+
+  const gpuAccelerationLikelyAvailable = GPUAccelerationSupported()
+  assert(
+    typeof gpuAccelerationLikelyAvailable === 'boolean',
+    `[e2e:${runtime}] GPUAccelerationSupported() did not return a boolean`
+  )
+
+  if (runtime === 'node' || runtime === 'bun' || runtime === 'deno') {
+    assert(
+      gpuAccelerationLikelyAvailable === false,
+      `[e2e:${runtime}] GPUAccelerationSupported() should return false`
+    )
+  }
 
   console.log(`[e2e:${runtime}] loading inference session`)
   const session = await createInferenceSession(getIdentityModel())

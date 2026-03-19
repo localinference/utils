@@ -16,6 +16,7 @@ test-results/
 
 .env
 .env.*.local
+deno.lock
 
 .DS_Store
 Thumbs.db

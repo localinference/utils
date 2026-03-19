@@ -9,6 +9,31 @@ import {
 } from '../../dist/index.js'
 import { getIdentityModel } from '../fixtures/models.js'
 
+const withGlobalOverrides = async (overrides, run) => {
+  const originals = new Map()
+
+  try {
+    for (const [key, value] of Object.entries(overrides)) {
+      originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
+      Object.defineProperty(globalThis, key, {
+        configurable: true,
+        writable: true,
+        value,
+      })
+    }
+
+    await run()
+  } finally {
+    for (const [key, descriptor] of originals.entries()) {
+      if (descriptor) {
+        Object.defineProperty(globalThis, key, descriptor)
+      } else {
+        Reflect.deleteProperty(globalThis, key)
+      }
+    }
+  }
+}
+
 test('createInferenceSession creates a runnable identity model session', async () => {
   const session = await createInferenceSession(getIdentityModel())
 
@@ -41,57 +66,116 @@ test('createInferenceSession wraps ONNX Runtime initialization failures', async 
 })
 
 test('createInferenceSession wraps deno-branch initialization failures', async () => {
-  const originalProcess = globalThis.process
-  const originalDeno = globalThis.Deno
   const originalCreate = ort.InferenceSession.create
   const originalNumThreads = ort.env.wasm.numThreads
 
-  globalThis.process = undefined
-  globalThis.Deno = { version: { deno: '2.2.5' } }
-  ort.InferenceSession.create = async () => {
+  ort.InferenceSession.create = async (_model, options) => {
+    assert.deepEqual(options.executionProviders, ['wasm'])
     throw new Error('forced deno inference failure')
   }
 
   try {
-    await assert.rejects(
-      () => createInferenceSession(new Uint8Array([0, 1, 2])),
-      (error) => {
-        assert.ok(error instanceof LocalInferenceUtilsError)
-        assert.equal(error.code, 'INFERENCE_SESSION_CREATE_FAILED')
-        assert.equal(ort.env.wasm.numThreads, 1)
-        assert.ok(error.cause instanceof Error)
-        return true
+    await withGlobalOverrides(
+      {
+        process: undefined,
+        Deno: { version: { deno: '2.2.5' } },
+      },
+      async () => {
+        await assert.rejects(
+          () => createInferenceSession(new Uint8Array([0, 1, 2])),
+          (error) => {
+            assert.ok(error instanceof LocalInferenceUtilsError)
+            assert.equal(error.code, 'INFERENCE_SESSION_CREATE_FAILED')
+            assert.equal(ort.env.wasm.numThreads, 1)
+            assert.ok(error.cause instanceof Error)
+            return true
+          }
+        )
       }
     )
   } finally {
     ort.InferenceSession.create = originalCreate
     ort.env.wasm.numThreads = originalNumThreads
-    globalThis.Deno = originalDeno
-    globalThis.process = originalProcess
   }
 })
 
 test('createInferenceSession wraps browser-branch initialization failures', async () => {
-  const originalProcess = globalThis.process
   const originalCreate = ortAll.InferenceSession.create
 
-  globalThis.process = undefined
-  ortAll.InferenceSession.create = async () => {
+  ortAll.InferenceSession.create = async (_model, options) => {
+    assert.deepEqual(options.executionProviders, [
+      'webnn',
+      'webgpu',
+      'webgl',
+      'wasm',
+    ])
     throw new Error('forced browser inference failure')
   }
 
   try {
-    await assert.rejects(
-      () => createInferenceSession(new Uint8Array([0, 1, 2])),
-      (error) => {
-        assert.ok(error instanceof LocalInferenceUtilsError)
-        assert.equal(error.code, 'INFERENCE_SESSION_CREATE_FAILED')
-        assert.ok(error.cause instanceof Error)
-        return true
+    await withGlobalOverrides(
+      {
+        process: undefined,
+        Deno: undefined,
+        navigator: {
+          gpu: { requestAdapter() {} },
+        },
+      },
+      async () => {
+        await assert.rejects(
+          () => createInferenceSession(new Uint8Array([0, 1, 2])),
+          (error) => {
+            assert.ok(error instanceof LocalInferenceUtilsError)
+            assert.equal(error.code, 'INFERENCE_SESSION_CREATE_FAILED')
+            assert.ok(error.cause instanceof Error)
+            return true
+          }
+        )
       }
     )
   } finally {
     ortAll.InferenceSession.create = originalCreate
-    globalThis.process = originalProcess
+  }
+})
+
+test('createInferenceSession uses the wasm execution provider list when browser GPU APIs are unavailable', async () => {
+  const originalWasmCreate = ort.InferenceSession.create
+  const originalBrowserCreate = ortAll.InferenceSession.create
+  let usedBrowserRuntime = false
+
+  try {
+    ort.InferenceSession.create = async (_model, options) => {
+      assert.deepEqual(options.executionProviders, ['wasm'])
+      throw new Error('forced wasm-only inference failure')
+    }
+    ortAll.InferenceSession.create = async () => {
+      usedBrowserRuntime = true
+      throw new Error('browser runtime should not have been selected')
+    }
+
+    await withGlobalOverrides(
+      {
+        process: undefined,
+        Deno: undefined,
+        navigator: {},
+        OffscreenCanvas: undefined,
+        document: undefined,
+      },
+      async () => {
+        await assert.rejects(
+          () => createInferenceSession(new Uint8Array([0, 1, 2])),
+          (error) => {
+            assert.ok(error instanceof LocalInferenceUtilsError)
+            assert.equal(error.code, 'INFERENCE_SESSION_CREATE_FAILED')
+            assert.equal(usedBrowserRuntime, false)
+            assert.ok(error.cause instanceof Error)
+            return true
+          }
+        )
+      }
+    )
+  } finally {
+    ort.InferenceSession.create = originalWasmCreate
+    ortAll.InferenceSession.create = originalBrowserCreate
   }
 })

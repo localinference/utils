@@ -4,7 +4,7 @@ import path from 'node:path'
 
 const root = process.cwd()
 const host = '127.0.0.1'
-const port = 4173
+const port = Number(process.env.PLAYWRIGHT_TEST_PORT ?? '4173')
 
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -55,3 +55,12 @@ const server = createServer(async (request, response) => {
 server.listen(port, host, () => {
   console.log(`Playwright server listening on http://${host}:${port}`)
 })
+
+const stopServer = () => {
+  server.close(() => {
+    process.exit(0)
+  })
+}
+
+process.on('SIGINT', stopServer)
+process.on('SIGTERM', stopServer)

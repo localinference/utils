@@ -20,12 +20,18 @@ const runtimeCommands = [
     shell: process.platform === 'win32',
     args: [
       'run',
+      '--no-lock',
       '--node-modules-dir=auto',
       '--allow-env',
       '--allow-read',
       '--allow-net',
       'test/e2e/runsInDeno/run.mjs',
     ],
+  },
+  {
+    label: 'edge-runtime',
+    command: process.execPath,
+    args: ['test/e2e/runsInEdgeRuntimes/run.mjs'],
   },
   {
     label: 'browsers',
