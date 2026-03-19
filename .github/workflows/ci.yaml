@@ -28,8 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
 
       - name: Run tests
         run: npm test
@@ -42,8 +49,7 @@ jobs:
           fail_ci_if_error: true
 
       - name: Enforce formatting
-        run: |
-          npm run format
+        run: npm run format
 
   release-please:
     if: github.event_name == 'push'
@@ -80,4 +86,4 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
 
-      - run: npm publish --access public --ignore-scripts
+      - run: npm publish --provenance --access public --ignore-scripts

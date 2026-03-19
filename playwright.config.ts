@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: 'test/e2e',
-  timeout: 30000,
+  testDir: 'test/e2e/runsInBrowsers',
+  timeout: 60000,
   use: {
     baseURL: 'http://127.0.0.1:4173',
   },

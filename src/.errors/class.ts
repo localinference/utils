@@ -1,12 +1,18 @@
-export type PackageNameErrorCode = 'EXAMPLE_ERROR_CODE'
+export type LocalInferenceUtilsErrorCode =
+  | 'TOKENIZER_MODEL_LOAD_FAILED'
+  | 'INFERENCE_SESSION_CREATE_FAILED'
 
-export class PackageNameError extends Error {
-  readonly code: PackageNameErrorCode
+export class LocalInferenceUtilsError extends Error {
+  readonly code: LocalInferenceUtilsErrorCode
 
-  constructor(code: PackageNameErrorCode, message?: string) {
+  constructor(
+    code: LocalInferenceUtilsErrorCode,
+    message?: string,
+    options?: ErrorOptions
+  ) {
     const detail = message ?? code
-    super(`{@z-base/package-name} ${detail}`)
+    super(`{@localinference/utils} ${detail}`, options)
     this.code = code
-    this.name = 'PackageNameError'
+    this.name = 'LocalInferenceUtilsError'
   }
 }
