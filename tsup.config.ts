@@ -8,9 +8,9 @@ export default defineConfig({
   platform: 'node',
   target: 'node22',
   dts: false,
-  sourcemap: true,
+  sourcemap: false,
   splitting: false,
-  clean: false,
+  clean: true,
   external: ['onnxruntime-web', 'onnxruntime-web/all'],
   noExternal: ['@sctg/sentencepiece-js', '@sovereignbase/bytecodec'],
   outExtension() {

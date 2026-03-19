@@ -5,12 +5,12 @@
 
 # utils
 
-LocalInference internal utils package for removing repeated tokenizer and ONNX Runtime Web setup across codebases.
+Local Inference internal utils package to avoid boilerplate across codebases.
 
 ## Compatibility
 
 - Runtimes: Node >= 22; Bun and Deno via npm compatibility; Browsers: modern browsers with WebAssembly; Workers/Edge: browser-like runtimes may work when ONNX Runtime Web assets are reachable.
-- Module format: ESM-only.
+- Module formats: ESM and CommonJS.
 - Required globals / APIs: `Uint8Array`; browser runtimes need ONNX Runtime Web compatible backends such as `WebNN`, `WebGPU`, `WebGL`, or `WebAssembly`.
 - TypeScript: bundled types.
 

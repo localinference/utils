@@ -1,7 +1,7 @@
 {
   "name": "@localinference/utils",
   "version": "0.0.0",
-  "description": "Local Infernce internal utils module to avoid boilerplate across codebases.",
+  "description": "Local Inference internal utils package to avoid boilerplate across codebases.",
   "keywords": [
     "localinference",
     "onnx",
@@ -10,6 +10,7 @@
     "inference",
     "browser",
     "esm",
+    "commonjs",
     "typescript"
   ],
   "license": "Apache-2.0",
@@ -26,8 +27,9 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "dist-cjs",
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist-cjs/**/*.cjs",
     "LICENSE",
     "README.md"
   ],
