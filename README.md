@@ -108,10 +108,12 @@ This package does not cache tokenizers or inference sessions. Each call creates 
 - Coverage runner: `node test/run-coverage.mjs`
 - Coverage result: `100%` statements, branches, functions, and lines
 - Runtime e2e coverage:
-  - Node
-  - Bun
-  - Deno
-  - Vercel Edge Runtime (`GPUAccelerationSupported()` / wasm-path smoke)
+  - Node ESM
+  - Node CommonJS
+  - Bun ESM
+  - Bun CommonJS
+  - Deno ESM
+  - Vercel Edge Runtime ESM (`GPUAccelerationSupported()` / wasm-path smoke)
   - Chromium
   - Firefox
   - WebKit
@@ -119,7 +121,7 @@ This package does not cache tokenizers or inference sessions. Each call creates 
   - Mobile Safari (`iPhone 12`)
 - CI matrix: Node `22.x` and `24.x`
 
-`npm test` builds the package, runs the `node:test` unit/integration suite under `c8`, then runs the end-to-end smoke suite against the built package across all supported runtimes above.
+`npm test` builds the package, runs the `node:test` unit/integration suite under `c8`, then runs the end-to-end smoke suite against the built package across the ESM/CJS/runtime matrix above.
 
 ## Benchmarks
 

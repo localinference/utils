@@ -41,8 +41,6 @@ const runtimeCommands = [
 ]
 
 for (const runtime of runtimeCommands) {
-  console.log(`Running ${runtime.label} e2e`)
-
   const result = spawnSync(runtime.command, runtime.args, {
     shell: runtime.shell ?? false,
     stdio: 'inherit',

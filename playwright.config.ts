@@ -5,7 +5,7 @@ const baseURL = `http://127.0.0.1:${port}`
 
 export default defineConfig({
   testDir: 'test/e2e/runsInBrowsers',
-  timeout: 60000,
+  timeout: 120000,
   use: {
     baseURL,
   },

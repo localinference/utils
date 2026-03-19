@@ -71,6 +71,7 @@ const serverProcess = spawn(process.execPath, ['test/e2e/server.mjs'], {
 })
 
 try {
+  console.log('=== Browsers E2E ===')
   await waitForServer(serverProcess)
 
   const result = spawnSync(

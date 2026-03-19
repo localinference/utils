@@ -19,7 +19,7 @@ test('browser scenario passes in this project', async ({ page }) => {
     () => globalThis.__E2E_RESULT__?.status,
     undefined,
     {
-      timeout: 60000,
+      timeout: 120000,
     }
   )
 

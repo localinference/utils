@@ -53,7 +53,9 @@ const server = createServer(async (request, response) => {
 })
 
 server.listen(port, host, () => {
-  console.log(`Playwright server listening on http://${host}:${port}`)
+  console.log(
+    `@localinference/utils test server running at http://${host}:${port}`
+  )
 })
 
 const stopServer = () => {
