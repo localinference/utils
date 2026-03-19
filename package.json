@@ -1,6 +1,6 @@
 {
   "name": "@localinference/utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local Inference internal utils package to avoid boilerplate across codebases.",
   "keywords": [
     "localinference",

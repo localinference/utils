@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/localinference/utils/compare/v1.0.0...v1.0.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* Fixed documentation gaps. ([11dcc03](https://github.com/localinference/utils/commit/11dcc030783ef632e94179bad81b4e7c1a5a0fb6))
+* Fixed documentation gaps. ([9d35216](https://github.com/localinference/utils/commit/9d35216488914f0b43d9ddf6abcfcc625753f1a2))
+
 ## 1.0.0 (2026-03-19)
 
 
