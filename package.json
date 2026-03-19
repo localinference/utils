@@ -14,16 +14,23 @@
   ],
   "license": "Apache-2.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "homepage": "https://github.com/localinference/utils#readme",
+  "main": "./dist-cjs/index.cjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist-cjs/index.cjs"
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "dist-cjs",
+    "LICENSE",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/localinference/utils.git"
@@ -31,15 +38,12 @@
   "bugs": {
     "url": "https://github.com/localinference/utils/issues"
   },
-  "files": [
-    "dist",
-    "LICENSE",
-    "README.md"
-  ],
   "scripts": {
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "build": "tsc -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:cjs": "tsup",
+    "build": "npm run build:esm && npm run build:cjs",
     "test:coverage": "npm run build && node test/run-coverage.mjs",
     "test:e2e": "npm run build && node test/e2e/run.mjs",
     "test": "npm run test:coverage && node test/e2e/run.mjs",
@@ -77,6 +81,7 @@
     "husky": "^9.1.7",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
     "typescript": "^5.6.3"
   },
   "dependencies": {
